@@ -1,0 +1,18 @@
+local logparser = require "logparser"
+
+describe("TeX log analyser", function()
+  local logfile = io.open("test/test.log", "r")
+  it("Should open the log file", function()
+    assert.truthy(logfile)
+  end)
+  local log = logfile:read("*all")
+  logfile:close()
+  it("Log file shouldn't be empty", function()
+    assert.truthy(string.len(log) > 0)
+  end)
+  local errors = logparser.parse(log)
+  it("Should find errors in the log file", function()
+    assert.truthy(type(errors) == "table")
+    assert.truthy(#errors > 0)
+  end)
+end)
