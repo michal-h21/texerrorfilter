@@ -29,7 +29,7 @@ function print_chunks(chunks, level)
   local level = level or 0
   local indent = string.rep("  ", level)
   for k,v in ipairs(chunks) do
-    print(indent .. (v.filename or "unknown"), string.len(v.text))
+    print(indent .. (v.filename or "?"), string.len(v.text))
     print_chunks(v.children, level + 1)
   end
 end

@@ -33,7 +33,7 @@ end
 
 print("filename", "line", "message")
 for _, err in ipairs(errors) do
-  print(err.filename or "unknown" , err.line or "unknown" , err.error)
+  print(err.filename or "?" , err.line or "?" , err.error)
 end
   
 print "***********"
