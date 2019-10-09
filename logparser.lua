@@ -33,27 +33,38 @@ end
 local function parse_errors(text) 
   local lines = {}
   local errors = {}
+  local find_line_no = false
+  local error_lines = {}
   for line in text:gmatch("([^\n]+)") do
     lines[#lines+1] = line
   end
   for i = 1, #lines do 
     local line = lines[i]
     local err = line:match("^!(.+)")
+    local lineno = line:match("^l%.([0-9]+)")
     if err then 
       errors[#errors+1] = err 
+      -- we didn't find error line number since previous error, insert 
+      if find_line_no then
+        error_lines[#error_lines+1] = false
+      end
+      find_line_no = true
+    elseif lineno then
+      find_line_no = false
+      error_lines[#error_lines+1] = tonumber(lineno)
     end
     i = i + 1
   end
-  return errors
+  return errors, error_lines
 end
 
 
 local function get_errors(chunks, errors)
   local errors =  errors or {}
   for _, v in ipairs(chunks) do
-    local current_errors = parse_errors(v.text)
-    for _, err in ipairs(current_errors) do
-      table.insert(errors, {filename = v.filename, error = err})
+    local current_errors, error_lines = parse_errors(v.text)
+    for i, err in ipairs(current_errors) do
+      table.insert(errors, {filename = v.filename, error = err, line = error_lines[i] })
     end
     errors = get_errors(v.children, errors)
   end
@@ -63,12 +74,14 @@ end
 
 function m.parse(log)
   local chunks, newtext = get_chunks(log)
-  -- print_chunks(chunks)
+  -- save the unparsed text that contains system messages
+  table.insert(chunks, {filename = "system", text = newtext, children = {}})
+  print_chunks(chunks)
   local errors = get_errors(chunks)
   for _,v in ipairs(errors) do 
-    print("error", v.filename, v.error)
+    print("error", v.filename, v.line, v.error)
   end
-  return chunks 
+  return errors, chunks 
 end
 
 
