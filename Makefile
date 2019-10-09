@@ -4,7 +4,7 @@ all: test
 
 test: 
 	pushd test && \
-	pdflatex -interaction=nonstopmode  test.tex ;\
+	pdflatex -interaction=batchmode  test.tex ;\
 	popd ;\
 	busted test/test.lua;
 
