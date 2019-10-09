@@ -8,9 +8,13 @@ local function get_filename(chunk)
 end
 
 local function get_chunks(text)
+  -- parse log for particular included files
   local chunks = {}
+  -- each file is enclosed in matching () brackets
   local newtext = text:gsub("(%b())", function(a)
     local chunk = string.sub(a,2,-2)
+    -- if no filename had been found in the chunk, it is probably not file chunk
+    -- so just return the original text
     local filename = get_filename(chunk) 
     if not filename then return a end
     local children, text = get_chunks(chunk)
@@ -25,7 +29,7 @@ function print_chunks(chunks, level)
   local level = level or 0
   local indent = string.rep("  ", level)
   for k,v in ipairs(chunks) do
-    print(indent .. v.filename, string.len(v.text))
+    print(indent .. (v.filename or "unknown"), string.len(v.text))
     print_chunks(v.children, level + 1)
   end
 end
@@ -40,7 +44,10 @@ local function parse_errors(text)
   end
   for i = 1, #lines do 
     local line = lines[i]
+    -- error lines start with !
     local err = line:match("^!(.+)")
+    -- error lines can be on following lines
+    -- the format is l.number
     local lineno = line:match("^l%.([0-9]+)")
     if err then 
       errors[#errors+1] = err 
@@ -75,15 +82,16 @@ end
 function m.parse(log)
   local chunks, newtext = get_chunks(log)
   -- save the unparsed text that contains system messages
-  table.insert(chunks, {filename = "system", text = newtext, children = {}})
-  print_chunks(chunks)
+  table.insert(chunks, {text = newtext, children = {}})
+  -- print_chunks(chunks)
   local errors = get_errors(chunks)
-  for _,v in ipairs(errors) do 
-    print("error", v.filename, v.line, v.error)
-  end
+  -- for _,v in ipairs(errors) do 
+    -- print("error", v.filename, v.line, v.error)
+  -- end
   return errors, chunks 
 end
 
 
+m.print_chunks = print_chunks
 
 return m

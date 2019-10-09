@@ -1,0 +1,43 @@
+#!/usr/bin/env texlua
+kpse.set_program_name "luatex"
+local logparser = require "logparser"
+local log 
+
+local function help()
+  print "texlogparser "
+  print "Analyze TeX log output for errors"
+  print ""
+  print "  Usage:"
+  print "  texlogparser fileneme.log"
+  print "  or: texlogparser < filename.log"
+end
+
+if arg[1] then
+  local f = io.open(arg[1])
+  if not f then
+    help()
+    os.exit()
+  end
+  log = f:read("*all")
+  f:close()
+else
+  log = io.read("*all")
+end
+
+local errors, chunks = logparser.parse(log)
+
+if #errors == 0 then
+  print "No errors found"
+  os.exit()
+end
+
+print("filename", "line", "message")
+for _, err in ipairs(errors) do
+  print(err.filename or "unknown" , err.line or "unknown" , err.error)
+end
+  
+print "***********"
+print "Used files"
+logparser.print_chunks(chunks)
+
+
